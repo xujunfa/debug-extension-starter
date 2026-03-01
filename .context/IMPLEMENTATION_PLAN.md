@@ -68,17 +68,17 @@
 **目标**：面向调试场景的 UI 组件库就绪，DevTools Panel 中可查看组件展示页。
 
 ### 任务
-- [ ] 3.1 引入 shadcn/ui 基础组件（Button、Input、Tabs、ScrollArea、Badge、Tooltip 等）
+- [x] 3.1 引入 shadcn/ui 基础组件（Button、Input、Tabs、ScrollArea、Badge、Tooltip 等）
   - 文件：`components/ui/*.tsx`
-- [ ] 3.2 构建 JSON/对象树形查看器组件
+- [x] 3.2 构建 JSON/对象树形查看器组件
   - 文件：`components/debug/json-viewer.tsx`
-- [ ] 3.3 构建 Key-Value 数据展示组件（支持高亮、折叠）
+- [x] 3.3 构建 Key-Value 数据展示组件（支持高亮、折叠）
   - 文件：`components/debug/kv-display.tsx`
-- [ ] 3.4 构建代码块/命令展示组件
+- [x] 3.4 构建代码块/命令展示组件
   - 文件：`components/debug/code-block.tsx`
-- [ ] 3.5 构建布局原语（PanelLayout、SplitPane、TabLayout）
+- [x] 3.5 构建布局原语（PanelLayout、SplitPane、TabLayout）
   - 文件：`components/layout/panel-layout.tsx`、`components/layout/split-pane.tsx`、`components/layout/tab-layout.tsx`
-- [ ] 3.6 在 DevTools Panel 中创建组件展示页（Component Showcase）
+- [x] 3.6 在 DevTools Panel 中创建组件展示页（Component Showcase）
   - 文件：`entrypoints/devtools-panel/pages/showcase.tsx`
 
 ### 验收标准

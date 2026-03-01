@@ -1,5 +1,7 @@
 import { sendRequest } from '@/lib/messaging/request';
 import { connectToBackground, eventBus } from '@/lib/messaging/events';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ShowcasePage from './pages/showcase';
 
 interface PingResult {
   source: string;
@@ -7,7 +9,7 @@ interface PingResult {
   rtt: number;
 }
 
-export default function App() {
+function ConnectionPanel() {
   const [contentReady, setContentReady] = useState(false);
   const [pinging, setPinging] = useState(false);
   const [lastPing, setLastPing] = useState<PingResult | null>(null);
@@ -51,9 +53,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen flex-col gap-4 p-4">
-      <h1 className="text-xl font-bold">Debug Tool Scaffold</h1>
-
+    <div className="flex flex-col gap-3 p-4">
       <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Connection Status
@@ -88,6 +88,40 @@ export default function App() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <div className="flex h-screen flex-col">
+      <div className="shrink-0 border-b px-4 py-2">
+        <h1 className="text-lg font-bold">Debug Tool Scaffold</h1>
+      </div>
+
+      <Tabs defaultValue="home" className="flex flex-1 flex-col overflow-hidden">
+        <TabsList className="w-full justify-start rounded-none border-b bg-transparent px-2">
+          <TabsTrigger
+            value="home"
+            className="rounded-none border-b-2 border-transparent px-3 py-1.5 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent"
+          >
+            Home
+          </TabsTrigger>
+          <TabsTrigger
+            value="showcase"
+            className="rounded-none border-b-2 border-transparent px-3 py-1.5 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent"
+          >
+            Components
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="home" className="mt-0 flex-1 overflow-auto">
+          <ConnectionPanel />
+        </TabsContent>
+        <TabsContent value="showcase" className="mt-0 flex-1 overflow-hidden">
+          <ShowcasePage />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
