@@ -41,19 +41,19 @@
 **目标**：类型安全的跨上下文消息总线就绪，DevTools Panel 中可验证 panel ↔ background ↔ content script 的双向通信。
 
 ### 任务
-- [ ] 2.1 设计消息总线 API 和类型定义（消息类型枚举、payload 类型、响应类型）
+- [x] 2.1 设计消息总线 API 和类型定义（消息类型枚举、payload 类型、响应类型）
   - 文件：`lib/messaging/types.ts`
-- [ ] 2.2 实现 request/response 模式（发送请求并等待响应）
+- [x] 2.2 实现 request/response 模式（发送请求并等待响应）
   - 文件：`lib/messaging/request.ts`
-- [ ] 2.3 实现事件订阅模式（发布/订阅，支持多监听者）
+- [x] 2.3 实现事件订阅模式（发布/订阅，支持多监听者）
   - 文件：`lib/messaging/events.ts`
-- [ ] 2.4 实现 background service worker 消息中继（代理 DevTools panel 与 content script 之间的通信）
+- [x] 2.4 实现 background service worker 消息中继（代理 DevTools panel 与 content script 之间的通信）
   - 文件：`entrypoints/background.ts`、`lib/messaging/relay.ts`
-- [ ] 2.5 创建 content script 入口，注册消息监听
+- [x] 2.5 创建 content script 入口，注册消息监听
   - 文件：`entrypoints/content.ts`
-- [ ] 2.6 在 DevTools Panel 中添加连接状态指示器和 ping/pong 测试
+- [x] 2.6 在 DevTools Panel 中添加连接状态指示器和 ping/pong 测试
   - 文件：`entrypoints/devtools-panel/App.tsx`
-- [ ] 2.7 封装统一的消息总线导出（对外暴露简洁 API）
+- [x] 2.7 封装统一的消息总线导出（对外暴露简洁 API）
   - 文件：`lib/messaging/index.ts`
 
 ### 验收标准
