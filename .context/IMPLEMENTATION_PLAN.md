@@ -2,7 +2,7 @@
 
 ## 概览
 - 项目：Chrome Extension Debug Tool Scaffold
-- 里程碑总数：6
+- 里程碑总数：8
 - 创建日期：2026-02-28
 
 ---
@@ -94,17 +94,17 @@
 **目标**：四种调试布局模板在 DevTools Panel 中可用，可通过 Tab 切换体验各模板功能。
 
 ### 任务
-- [ ] 4.1 设计模板注册机制（模板元数据、路由、懒加载）
+- [x] 4.1 设计模板注册机制（模板元数据、路由、懒加载）
   - 文件：`lib/templates/registry.ts`、`lib/templates/types.ts`
-- [ ] 4.2 实现网络请求面板模板（拦截特定接口、高亮关键字段、请求/响应对比）
+- [x] 4.2 实现网络请求面板模板（拦截特定接口、高亮关键字段、请求/响应对比）
   - 文件：`templates/network-panel/index.tsx`、`templates/network-panel/config.ts`
-- [ ] 4.3 实现数据查看器模板（绑定全局变量路径、自动刷新、搜索过滤）
+- [x] 4.3 实现数据查看器模板（绑定全局变量路径、自动刷新、搜索过滤）
   - 文件：`templates/data-viewer/index.tsx`、`templates/data-viewer/config.ts`
-- [ ] 4.4 实现命令面板模板（命令列表、一键执行、结果展示、命令历史）
+- [x] 4.4 实现命令面板模板（命令列表、一键执行、结果展示、命令历史）
   - 文件：`templates/command-palette/index.tsx`、`templates/command-palette/config.ts`
-- [ ] 4.5 实现 DOM 检查器模板（CSS 选择器输入、元素高亮、属性/样式查看）
+- [x] 4.5 实现 DOM 检查器模板（CSS 选择器输入、元素高亮、属性/样式查看）
   - 文件：`templates/dom-inspector/index.tsx`、`templates/dom-inspector/config.ts`
-- [ ] 4.6 在 DevTools Panel 中集成模板切换导航
+- [x] 4.6 在 DevTools Panel 中集成模板切换导航
   - 文件：`entrypoints/devtools-panel/App.tsx`、`entrypoints/devtools-panel/pages/templates.tsx`
 
 ### 验收标准
@@ -116,20 +116,67 @@
 
 ---
 
-## 里程碑 5：页面浮窗形态（P1）
+## 里程碑 5：调试模板增强（Pro 功能）
+
+**目标**：增强四个调试模板的实用性 — 保存视图、JSON 高亮、快照对比、脚本持久化、变更时间线。
+
+### 任务
+- [x] 5.0 通用基础设施 — 持久化存储工具
+  - 文件：`lib/storage.ts`
+  - 封装 `chrome.storage.local`，提供 typed get/set/remove；各模板的 storage key 定义在各自 config.ts
+- [x] 5.1 Network Panel — Saved Views（请求视图）
+  - 文件：`templates/network-panel/config.ts`、`templates/network-panel/index.tsx`
+  - 类型：`View { id, name, filterType: 'contains' | 'regex', pattern }`
+  - UI：Filter Input 右侧 "Save" 按钮 → 保存当前 filter 为 View；Filter Input 下方横向 Pill 标签条，点击即应用（单选互斥，再点取消），每个 Pill 有 x 删除按钮
+  - 选中 View 时 filter input 同步显示 pattern，过滤逻辑根据 filterType 分支（contains / regex）
+  - 持久化 key：`network-views`
+- [x] 5.2 Network Panel — Response JSON Highlight Rules
+  - 文件：`components/debug/json-viewer.tsx`（增强 props）、`templates/network-panel/index.tsx`
+  - JsonViewer 新增 `highlightKeys?: HighlightRule[]` prop；匹配 key 的行高亮背景 + 自动展开到对应路径层级
+  - UI：RequestDetail Response tab 结果上方常驻 Tag 条 — 每个 HighlightRule 渲染为一个 Tag（显示 key 名 + x 删除 + 点击 toggle 启用/禁用），末尾 "+" 按钮添加新 key
+  - 持久化 key：`network-highlight-rules`
+- [x] 5.3 Data Viewer — Snapshots & History（快照与历史）
+  - 文件：`templates/data-viewer/config.ts`、`templates/data-viewer/index.tsx`
+  - 类型：`Snapshot { id, timestamp, label?, entries: { expressionId, expression, label?, value, error? }[] }`
+  - UI：工具栏增加 "Take Snapshot" 按钮；底部 Snapshots 折叠面板（时间倒序列表，点击查看详情）；Checkbox 选 2 个出现 "Compare" 按钮 → 逐表达式 Diff（before/after 标红绿）
+  - 持久化 key：`data-viewer-snapshots`（限最近 50 条）
+- [x] 5.4 Command Palette — 脚本持久化 + 拖拽排序
+  - 文件：`templates/command-palette/config.ts`、`templates/command-palette/index.tsx`
+  - 类型：`UserScript { id, name, description, script, enabled, order }`
+  - 左栏重构：Built-in Commands 分区（不可编辑）+ User Scripts 分区（CRUD + HTML5 拖拽排序 + enable/disable toggle）；底部保留快速 eval 输入框
+  - 右栏：执行历史增加 flat / grouped by command name 视图切换
+  - 持久化 key：`command-user-scripts`
+- [x] 5.5 DOM Inspector — 元素变更时间线
+  - 文件：`templates/dom-inspector/config.ts`、`templates/dom-inspector/index.tsx`
+  - 通过 `inspectedWindow.eval` 注入 MutationObserver + ResizeObserver + getBoundingClientRect/computedStyle 轮询到页面；变更写入 `window.__debugTimeline`，DevTools panel 每 500ms 通过 eval 读取并清空
+  - 类型：`TimelineEvent { timestamp, type: 'attribute'|'style'|'resize'|'position', selector, detail: { property, before, after } }`
+  - UI：查询结果后出现 "Monitor" 按钮 → 开始监控；下方 SplitPane 垂直展示 Timeline（Pause/Resume/Clear + 事件列表 + 类型筛选 toggle）
+  - 离开或取消监控时清理注入的 observer
+
+### 验收标准
+- Network Panel：Views 可保存/切换/删除，刷新后持久化；选中 View 后列表按规则过滤
+- Network Panel：Highlight Tags 常驻 Response 结果上方，匹配 key 在 JSON 中高亮且自动展开到对应路径
+- Data Viewer：Take Snapshot 保存当前全部表达式结果；历史列表可查看详情；选 2 个可 Diff
+- Command Palette：自定义脚本 CRUD + 拖拽排序 + enable/disable；内置/用户脚本分区清晰；排序持久化
+- DOM Inspector：监控选中元素的 attribute/style/size/position 变化；Timeline 正确显示 before/after
+- `pnpm build` / `pnpm lint` / `pnpm compile` 通过
+
+---
+
+## 里程碑 6：页面浮窗形态（P1）
 
 **目标**：通过 Content Script 注入的全局浮窗独立于 DevTools 工作，复用消息总线和 UI 组件。
 
 ### 任务
-- [ ] 5.1 创建 Content Script UI 入口，使用 Shadow DOM 隔离样式
+- [ ] 6.1 创建 Content Script UI 入口，使用 Shadow DOM 隔离样式
   - 文件：`entrypoints/overlay.content/index.tsx`
-- [ ] 5.2 实现浮窗外壳（可拖拽、可折叠/展开、可调整大小）
+- [ ] 6.2 实现浮窗外壳（可拖拽、可折叠/展开、可调整大小）
   - 文件：`components/overlay/floating-widget.tsx`
-- [ ] 5.3 接入消息总线，复用通信层
+- [ ] 6.3 接入消息总线，复用通信层
   - 文件：`entrypoints/overlay.content/App.tsx`
-- [ ] 5.4 支持在浮窗中加载布局模板（复用里程碑 4 的模板）
+- [ ] 6.4 支持在浮窗中加载布局模板（复用里程碑 4 的模板）
   - 文件：`entrypoints/overlay.content/App.tsx`
-- [ ] 5.5 实现浮窗的显示/隐藏控制（通过 background 消息或快捷键）
+- [ ] 6.5 实现浮窗的显示/隐藏控制（通过 background 消息或快捷键）
   - 文件：`entrypoints/background.ts`
 
 ### 验收标准
@@ -140,18 +187,18 @@
 
 ---
 
-## 里程碑 6：侧边栏形态（P2）
+## 里程碑 7：侧边栏形态（P2）
 
 **目标**：Side Panel 形态可用，复用底座能力。
 
 ### 任务
-- [ ] 6.1 配置 Side Panel manifest 和权限
+- [ ] 7.1 配置 Side Panel manifest 和权限
   - 文件：`wxt.config.ts`、`entrypoints/sidepanel/index.html`
-- [ ] 6.2 创建 Side Panel 入口页面，复用 UI 组件和布局模板
+- [ ] 7.2 创建 Side Panel 入口页面，复用 UI 组件和布局模板
   - 文件：`entrypoints/sidepanel/main.tsx`、`entrypoints/sidepanel/App.tsx`
-- [ ] 6.3 接入消息总线
+- [ ] 7.3 接入消息总线
   - 文件：`entrypoints/sidepanel/App.tsx`
-- [ ] 6.4 实现 Side Panel 的打开方式（扩展图标点击或快捷键）
+- [ ] 7.4 实现 Side Panel 的打开方式（扩展图标点击或快捷键）
   - 文件：`entrypoints/background.ts`
 
 ### 验收标准

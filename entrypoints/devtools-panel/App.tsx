@@ -2,6 +2,7 @@ import { sendRequest } from '@/lib/messaging/request';
 import { connectToBackground, eventBus } from '@/lib/messaging/events';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ShowcasePage from './pages/showcase';
+import TemplatesPage from './pages/templates';
 
 interface PingResult {
   source: string;
@@ -99,8 +100,14 @@ export default function App() {
         <h1 className="text-lg font-bold">Debug Tool Scaffold</h1>
       </div>
 
-      <Tabs defaultValue="home" className="flex flex-1 flex-col overflow-hidden">
+      <Tabs defaultValue="templates" className="flex flex-1 flex-col overflow-hidden">
         <TabsList className="w-full justify-start rounded-none border-b bg-transparent px-2">
+          <TabsTrigger
+            value="templates"
+            className="rounded-none border-b-2 border-transparent px-3 py-1.5 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent"
+          >
+            Templates
+          </TabsTrigger>
           <TabsTrigger
             value="home"
             className="rounded-none border-b-2 border-transparent px-3 py-1.5 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent"
@@ -115,6 +122,9 @@ export default function App() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="templates" className="mt-0 flex-1 overflow-hidden">
+          <TemplatesPage />
+        </TabsContent>
         <TabsContent value="home" className="mt-0 flex-1 overflow-auto">
           <ConnectionPanel />
         </TabsContent>

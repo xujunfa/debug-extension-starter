@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+
 
 type JsonValue =
   | string
@@ -11,11 +11,18 @@ type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
+interface HighlightRule {
+  id: string;
+  key: string;
+  enabled: boolean;
+}
+
 interface JsonViewerProps {
   data: JsonValue;
   className?: string;
   defaultExpanded?: boolean;
   maxDepth?: number;
+  highlightKeys?: HighlightRule[];
 }
 
 interface JsonNodeProps {
@@ -24,6 +31,7 @@ interface JsonNodeProps {
   depth: number;
   defaultExpanded: boolean;
   maxDepth: number;
+  highlightSet: Set<string>;
 }
 
 function getType(value: JsonValue): string {
@@ -40,6 +48,19 @@ function getPreview(value: JsonValue): string {
     return `{${keys.length}}`;
   }
   return String(value);
+}
+
+function hasHighlightedDescendant(value: JsonValue, highlightSet: Set<string>): boolean {
+  if (highlightSet.size === 0) return false;
+  if (value === null || typeof value !== 'object') return false;
+  if (Array.isArray(value)) {
+    return value.some((v) => hasHighlightedDescendant(v, highlightSet));
+  }
+  for (const [k, v] of Object.entries(value)) {
+    if (highlightSet.has(k)) return true;
+    if (hasHighlightedDescendant(v, highlightSet)) return true;
+  }
+  return false;
 }
 
 const typeColors: Record<string, string> = {
@@ -77,19 +98,33 @@ function JsonNode({
   depth,
   defaultExpanded,
   maxDepth,
+  highlightSet,
 }: JsonNodeProps) {
   const isExpandable =
     value !== null && typeof value === 'object';
+  const isHighlighted = label != null && highlightSet.has(label);
+  const shouldAutoExpand = isExpandable && hasHighlightedDescendant(value, highlightSet);
   const [expanded, setExpanded] = React.useState(
-    defaultExpanded && depth < maxDepth,
+    shouldAutoExpand || (defaultExpanded && depth < maxDepth),
   );
+
+  React.useEffect(() => {
+    if (shouldAutoExpand && !expanded) setExpanded(true);
+  }, [shouldAutoExpand]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isExpandable) {
     return (
-      <div className="flex items-center gap-1 py-0.5 font-mono text-xs">
+      <div
+        className={cn(
+          'flex items-center gap-1 py-0.5 font-mono text-xs',
+          isHighlighted && 'rounded bg-yellow-500/15',
+        )}
+      >
         <span className="w-4" />
         {label != null && (
-          <span className="text-foreground/70">{label}: </span>
+          <span className={cn('text-foreground/70', isHighlighted && 'font-semibold text-yellow-700 dark:text-yellow-300')}>
+            {label}:{' '}
+          </span>
         )}
         <ValueDisplay value={value} />
       </div>
@@ -105,7 +140,10 @@ function JsonNode({
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-1 py-0.5 text-left hover:bg-accent/50"
+        className={cn(
+          'flex w-full items-center gap-1 py-0.5 text-left hover:bg-accent/50',
+          isHighlighted && 'rounded bg-yellow-500/15',
+        )}
       >
         <ChevronRight
           className={cn(
@@ -114,11 +152,13 @@ function JsonNode({
           )}
         />
         {label != null && (
-          <span className="text-foreground/70">{label}: </span>
+          <span className={cn('text-foreground/70', isHighlighted && 'font-semibold text-yellow-700 dark:text-yellow-300')}>
+            {label}:{' '}
+          </span>
         )}
-        <Badge variant="outline" className="h-4 rounded px-1 text-[10px]">
+        <span className="text-[10px] text-muted-foreground/50">
           {Array.isArray(value) ? `[${value.length}]` : getPreview(value)}
-        </Badge>
+        </span>
       </button>
 
       {expanded && (
@@ -131,6 +171,7 @@ function JsonNode({
               depth={depth + 1}
               defaultExpanded={defaultExpanded}
               maxDepth={maxDepth}
+              highlightSet={highlightSet}
             />
           ))}
           {entries.length === 0 && (
@@ -149,7 +190,13 @@ function JsonViewer({
   className,
   defaultExpanded = true,
   maxDepth = 4,
+  highlightKeys,
 }: JsonViewerProps) {
+  const highlightSet = React.useMemo(
+    () => new Set((highlightKeys ?? []).filter((r) => r.enabled).map((r) => r.key)),
+    [highlightKeys],
+  );
+
   return (
     <div className={cn('overflow-auto rounded-md border bg-card p-2', className)}>
       <JsonNode
@@ -157,9 +204,10 @@ function JsonViewer({
         depth={0}
         defaultExpanded={defaultExpanded}
         maxDepth={maxDepth}
+        highlightSet={highlightSet}
       />
     </div>
   );
 }
 
-export { JsonViewer, type JsonValue, type JsonViewerProps };
+export { JsonViewer, type JsonValue, type JsonViewerProps, type HighlightRule };

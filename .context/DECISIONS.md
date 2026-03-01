@@ -37,6 +37,16 @@
 - **决策**：所有消息通过 background relay 路由。DevTools panel 通过 `forwardToTab` 字段指示 background 转发到指定 tab 的 content script
 - **理由**：Chrome 扩展架构要求 DevTools panel 必须通过 background 中转；中心化路由逻辑清晰，便于调试和扩展
 
+## [DEC-006] 调试模板使用 DevTools API 而非消息总线
+- **日期**：2026-03-01
+- **里程碑**：4 — DevTools Panel 调试布局模板
+- **背景**：四个调试模板需要与页面交互（执行 JS、读取 DOM、捕获网络请求），可以通过消息总线经 content script 或直接使用 DevTools API
+- **备选方案**：
+  1. DevTools API（`chrome.devtools.inspectedWindow.eval`、`chrome.devtools.network`）— DevTools panel 直接访问，无需 content script 参与
+  2. 消息总线 — 通过 content script 代理所有页面操作
+- **决策**：使用 DevTools API
+- **理由**：DevTools panel 上下文天然可用这些 API；避免 content script 膨胀；减少消息传递开销；eval API 可直接执行任意 JS 并获取结果；网络面板使用 HAR 标准格式
+
 ## [DEC-005] onMessage 异步响应使用 sendResponse 回调而非 Promise return
 - **日期**：2026-03-01
 - **里程碑**：2 — 通信层
@@ -46,3 +56,42 @@
   2. `return Promise` — webextension-polyfill 扩展语法，`@wxt-dev/browser` 不完整支持
 - **决策**：使用 `sendResponse` + `return true`
 - **理由**：`@wxt-dev/browser` 对 Promise return 的支持不完整；`sendResponse` 是 Chrome API 标准，兼容性最好
+
+## [DEC-007] 持久化存储封装为极简 typed 工具函数
+- **日期**：2026-03-01
+- **里程碑**：5 — 调试模板增强
+- **背景**：多个模板需要持久化数据到 `chrome.storage.local`
+- **备选方案**：
+  1. 每个模板直接调用 `chrome.storage.local` — 重复代码
+  2. `lib/storage.ts` 封装 typed get/set/remove — 最小抽象
+  3. 引入 zustand/jotai + chrome storage 适配器 — 过度工程化
+- **决策**：方案 2 — 3 个简单函数，各模板 storage key 定义在各自 config.ts
+- **理由**：当前只需 get/set/remove，不需要响应式状态管理。保持简单，后续有需要再升级
+
+## [DEC-008] DOM Inspector 时间线通过 eval 注入 observer + 轮询读取
+- **日期**：2026-03-01
+- **里程碑**：5 — 调试模板增强
+- **背景**：DevTools Panel 无法直接访问页面 DOM，需要通过 `inspectedWindow.eval` 注入
+- **备选方案**：
+  1. Content Script 注入 + 消息总线传事件 — 需要修改 content script，增加消息类型
+  2. `inspectedWindow.eval` 注入 + 轮询 `window.__debugTimeline` — 自包含，不依赖消息总线
+- **决策**：方案 2
+- **理由**：独立于消息总线，实现更简洁；500ms 轮询间隔足够捕获大多数变化；离开时清理注入的 observer 避免内存泄漏
+
+## [DEC-009] 模板组件常驻 mounted，CSS 切换可见性
+- **日期**：2026-03-01
+- **里程碑**：5 — 调试模板增强
+- **背景**：切换模板 tab 时组件卸载导致所有 React 状态丢失（request list、filter、views 选中态等）
+- **备选方案**：
+  1. 条件渲染（当前方案）— 切换即卸载，状态全丢
+  2. 所有模板同时 mounted + absolute/visible-invisible 切换 — 状态保持，内存代价可接受
+  3. 状态提升到父组件或全局 store — 工程量大，过度设计
+- **决策**：方案 2
+- **理由**：四个模板组件轻量，常驻 mounted 内存开销可忽略；invisible 的组件不参与布局和事件，对性能无影响；避免了为每个模板维护外部状态的复杂度
+
+## [DEC-010] Data Viewer 快照改为 per-expression 维度
+- **日期**：2026-03-01
+- **里程碑**：5 — 调试模板增强
+- **背景**：初版的全局快照面板（底部折叠 + 选两个 Diff）交互复杂且不直观
+- **决策**：每个 WatchCard 内嵌自己的 snapshot timeline，展开后显示时间序列 diff
+- **理由**：与 DOM Inspector 的 per-element Monitor 交互一致；数据粒度更细；无需全局选择 + Diff 的复杂流程
