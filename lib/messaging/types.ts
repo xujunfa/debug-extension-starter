@@ -40,6 +40,17 @@ export type RequestType = keyof RequestMap;
  */
 export interface EventMap {
   CONTENT_SCRIPT_STATUS: { ready: boolean };
+  WS_MONITOR_EVENT: {
+    type: 'ws:connect' | 'ws:message' | 'ws:close';
+    connectionId: string;
+    url?: string;
+    direction?: 'sent' | 'received';
+    data?: string;
+    size?: number;
+    timestamp: number;
+    closeCode?: number;
+    closeReason?: string;
+  };
 }
 
 export type EventType = keyof EventMap;

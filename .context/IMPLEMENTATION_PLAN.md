@@ -2,8 +2,9 @@
 
 ## 概览
 - 项目：Chrome Extension Debug Tool Scaffold
-- 里程碑总数：8
+- 里程碑总数：9
 - 创建日期：2026-02-28
+- 最近更新：2026-03-05
 
 ---
 
@@ -204,20 +205,79 @@
 
 ---
 
-## 里程碑 7：页面浮窗形态（P1）
+## 里程碑 7：WebSocket Monitor
+
+**目标**：DevTools Panel 新增 WS Monitor 模板，可实时捕获页面 WebSocket 连接的收发消息，支持多连接监听、消息体自动解码、关键词搜索和正则过滤。
+
+### 任务
+- [x] 7.1 定义数据类型与消息协议
+  - 文件：`templates/ws-monitor/config.ts`
+  - 类型：`WsConnection { id, url, status, openedAt, closedAt?, closeCode?, closeReason?, color }`、`WsMessage { id, connectionId, direction, data, timestamp, size }`
+  - 消息协议常量：`WS_MONITOR_EVENT_KEY`（postMessage 标识）
+  - 事件类型：`ws:connect`、`ws:message`、`ws:close`
+  - 连接颜色分配：预定义 8 色循环
+
+- [x] 7.2 实现页面注入脚本（WebSocket monkey-patch）
+  - 文件：`templates/ws-monitor/injector.ts`
+  - 通过 `chrome.devtools.inspectedWindow.eval()` 注入
+  - monkey-patch `window.WebSocket` 构造函数，拦截 `send`、`onmessage`、`addEventListener('message')`、`close` 事件
+  - 拦截到的消息通过 `window.postMessage({ __ws_monitor: true, ... })` 发送
+  - 注入前检查全局标记 `window.__wsMonitorInjected` 避免重复注入
+  - 提供清理函数，恢复原始 WebSocket 构造函数
+
+- [x] 7.3 扩展消息总线（Content Script 中继 → DevTools）
+  - 文件：`lib/messaging/types.ts`、`entrypoints/content.ts`、`entrypoints/background.ts`
+  - `lib/messaging/types.ts`：EventMap 新增 `WS_MONITOR_EVENT` 事件类型
+  - `entrypoints/content.ts`：监听 `window message` 事件，过滤 `__ws_monitor` 标记，通过 `chrome.runtime.sendMessage` 转发到 Background
+  - `entrypoints/background.ts`：接收 WS monitor 消息，通过 `pushEvent` 推送到对应 tab 的 DevTools Panel
+
+- [x] 7.4 实现 WS Monitor 模板 UI — 连接列表与消息列表（左栏）
+  - 文件：`templates/ws-monitor/index.tsx`
+  - 工具栏：Start/Stop 按钮（控制注入与监听）、Clear 按钮、Filter 输入框 + 正则切换
+  - 左栏上方 — 连接列表：状态圆点（● open 绿 / ○ closed 灰）+ URL + 颜色标识；"All" 按钮；支持多选（Ctrl/Cmd + Click）；可折叠
+  - 左栏下方 — 消息列表：方向箭头（↓ received / ↑ sent）+ 时间戳 + 消息预览截断 + 来源连接颜色 Badge
+  - 底部状态栏：连接数 + 消息数统计
+  - 消息列表根据选中连接过滤
+  - Filter 支持 contains / regex 两种模式，匹配消息内容
+
+- [x] 7.5 实现 WS Monitor 模板 UI — 消息体详情（右栏）
+  - 文件：`templates/ws-monitor/index.tsx`
+  - 使用 `SplitPane` 组件实现左右双栏
+  - 点击消息列表某条 → 右栏展示完整消息体
+  - 自动解码：尝试 `JSON.parse`，成功用 `JsonViewer` 树形展示，失败用等宽文本
+  - 复用现有 `JsonViewer`、`SplitPane` 组件
+
+- [x] 7.6 注册模板到模板注册表
+  - 文件：`lib/templates/registry.ts`
+  - 添加 ws-monitor 模板注册（icon: `Cable` from lucide-react）
+
+### 验收标准
+- DevTools Panel 中可见 WS Monitor tab
+- 点击 Start 后能捕获页面新建 WebSocket 连接的收发消息
+- 连接列表正确展示所有捕获的 WS 连接及其状态
+- 支持多选连接，消息列表正确过滤和合并展示
+- 消息体 JSON 自动解码为树形展示
+- 关键词搜索和正则过滤正常工作
+- Clear 清空消息列表
+- Stop 停止捕获
+- `pnpm build` / `pnpm lint` / `pnpm compile` 通过
+
+---
+
+## 里程碑 8：页面浮窗形态（P1）
 
 **目标**：通过 Content Script 注入的全局浮窗独立于 DevTools 工作，复用消息总线和 UI 组件。
 
 ### 任务
-- [ ] 7.1 创建 Content Script UI 入口，使用 Shadow DOM 隔离样式
+- [ ] 8.1 创建 Content Script UI 入口，使用 Shadow DOM 隔离样式
   - 文件：`entrypoints/overlay.content/index.tsx`
-- [ ] 7.2 实现浮窗外壳（可拖拽、可折叠/展开、可调整大小）
+- [ ] 8.2 实现浮窗外壳（可拖拽、可折叠/展开、可调整大小）
   - 文件：`components/overlay/floating-widget.tsx`
-- [ ] 7.3 接入消息总线，复用通信层
+- [ ] 8.3 接入消息总线，复用通信层
   - 文件：`entrypoints/overlay.content/App.tsx`
-- [ ] 7.4 支持在浮窗中加载布局模板（复用里程碑 4 的模板）
+- [ ] 8.4 支持在浮窗中加载布局模板（复用里程碑 4 的模板）
   - 文件：`entrypoints/overlay.content/App.tsx`
-- [ ] 7.5 实现浮窗的显示/隐藏控制（通过 background 消息或快捷键）
+- [ ] 8.5 实现浮窗的显示/隐藏控制（通过 background 消息或快捷键）
   - 文件：`entrypoints/background.ts`
 
 ### 验收标准
@@ -228,18 +288,18 @@
 
 ---
 
-## 里程碑 8：侧边栏形态（P2）
+## 里程碑 9：侧边栏形态（P2）
 
 **目标**：Side Panel 形态可用，复用底座能力。
 
 ### 任务
-- [ ] 8.1 配置 Side Panel manifest 和权限
+- [ ] 9.1 配置 Side Panel manifest 和权限
   - 文件：`wxt.config.ts`、`entrypoints/sidepanel/index.html`
-- [ ] 8.2 创建 Side Panel 入口页面，复用 UI 组件和布局模板
+- [ ] 9.2 创建 Side Panel 入口页面，复用 UI 组件和布局模板
   - 文件：`entrypoints/sidepanel/main.tsx`、`entrypoints/sidepanel/App.tsx`
-- [ ] 8.3 接入消息总线
+- [ ] 9.3 接入消息总线
   - 文件：`entrypoints/sidepanel/App.tsx`
-- [ ] 8.4 实现 Side Panel 的打开方式（扩展图标点击或快捷键）
+- [ ] 9.4 实现 Side Panel 的打开方式（扩展图标点击或快捷键）
   - 文件：`entrypoints/background.ts`
 
 ### 验收标准

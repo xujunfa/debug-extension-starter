@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { Globe, Database, Terminal, Search, FileText } from 'lucide-react';
+import { Globe, Database, Terminal, Search, FileText, Cable } from 'lucide-react';
 import type { TemplateDefinition } from './types';
 
 export const templates: TemplateDefinition[] = [
@@ -37,6 +37,13 @@ export const templates: TemplateDefinition[] = [
     description: 'Manage custom request headers with group-based control',
     icon: FileText,
     component: lazy(() => import('@/templates/header-manager')),
+  },
+  {
+    id: 'ws-monitor',
+    name: 'WebSocket',
+    description: 'Monitor WebSocket connections and messages in real-time',
+    icon: Cable,
+    component: lazy(() => import('@/templates/ws-monitor')),
   },
 ];
 

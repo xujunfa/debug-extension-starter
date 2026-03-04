@@ -89,6 +89,27 @@
 - **决策**：方案 2
 - **理由**：四个模板组件轻量，常驻 mounted 内存开销可忽略；invisible 的组件不参与布局和事件，对性能无影响；避免了为每个模板维护外部状态的复杂度
 
+## [DEC-011] WebSocket 消息捕获使用 inspectedWindow.eval 注入
+- **日期**：2026-03-05
+- **里程碑**：7 — WebSocket Monitor
+- **背景**：需要捕获页面 WebSocket 消息，候选方案有 chrome.debugger API、Content Script 注入、inspectedWindow.eval 注入
+- **备选方案**：
+  1. `chrome.debugger` API — 能力最强（含已建立连接），但页面顶部出现调试横幅
+  2. Content Script 注入 monkey-patch — 无横幅，但受 CSP 限制，需额外处理 MAIN world 注入
+  3. `inspectedWindow.eval` 注入 monkey-patch — 无横幅、绕过 CSP、无额外权限，但只能捕获注入后新建的连接
+- **决策**：方案 3
+- **理由**：项目已有 eval 注入先例（DOM Inspector）；DevTools 上下文天然可用；调试场景下刷新页面即可捕获所有连接，限制可接受
+
+## [DEC-012] WS Monitor 消息传回采用 postMessage + messaging bus 实时推送
+- **日期**：2026-03-05
+- **里程碑**：7 — WebSocket Monitor
+- **背景**：注入脚本捕获的 WS 消息需要传回 DevTools Panel
+- **备选方案**：
+  1. `window.postMessage` → Content Script → messaging bus → DevTools — 实时推送
+  2. 注入脚本缓存到全局数组 + eval 轮询读取 — 同 DOM Inspector 模式，有延迟
+- **决策**：方案 1
+- **理由**：WebSocket 消息是实时流式数据，轮询延迟不可接受；复用现有 messaging bus 体系
+
 ## [DEC-010] Data Viewer 快照改为 per-expression 维度
 - **日期**：2026-03-01
 - **里程碑**：5 — 调试模板增强
