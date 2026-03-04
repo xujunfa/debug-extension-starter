@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { Globe, Database, Terminal, Search } from 'lucide-react';
+import { Globe, Database, Terminal, Search, FileText } from 'lucide-react';
 import type { TemplateDefinition } from './types';
 
 export const templates: TemplateDefinition[] = [
@@ -30,6 +30,13 @@ export const templates: TemplateDefinition[] = [
     description: 'Query elements by CSS selector and inspect properties',
     icon: Search,
     component: lazy(() => import('@/templates/dom-inspector')),
+  },
+  {
+    id: 'header-manager',
+    name: 'Headers',
+    description: 'Manage custom request headers with group-based control',
+    icon: FileText,
+    component: lazy(() => import('@/templates/header-manager')),
   },
 ];
 

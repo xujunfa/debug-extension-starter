@@ -19,6 +19,17 @@ export interface RequestMap {
     request: Record<string, never>;
     response: { acknowledged: boolean };
   };
+  APPLY_HEADER_RULES: {
+    request: {
+      tabId: number;
+      headers: { name: string; value: string }[];
+    };
+    response: { success: boolean };
+  };
+  CLEAR_HEADER_RULES: {
+    request: { tabId: number };
+    response: { success: boolean };
+  };
 }
 
 export type RequestType = keyof RequestMap;

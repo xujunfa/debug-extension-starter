@@ -163,20 +163,61 @@
 
 ---
 
-## 里程碑 6：页面浮窗形态（P1）
+## 里程碑 6：Request Header 分组管理器
+
+**目标**：DevTools Panel 新增 Header Manager 模板 tab，支持以 Group 为单元管理自定义 Request Header，双层开关控制（Group toggle + Header checkbox），对当前 tab 所有请求生效。
+
+### 任务
+- [x] 6.1 定义数据类型与存储配置
+  - 文件：`templates/header-manager/config.ts`
+  - 类型：`HeaderItem { id, name, value, enabled }`、`HeaderGroup { id, name, enabled, headers: HeaderItem[], order }`
+  - 持久化 key：`header-groups`
+- [x] 6.2 添加 `declarativeNetRequest` 权限与 host permissions
+  - 文件：`wxt.config.ts`
+  - 新增 permissions：`declarativeNetRequest`；新增 host_permissions：`<all_urls>`
+- [x] 6.3 扩展消息类型（Panel ↔ Background 通信）
+  - 文件：`lib/messaging/types.ts`
+  - 新增 `APPLY_HEADER_RULES`（携带生效 headers 列表 + tabId）和 `CLEAR_HEADER_RULES`（清除指定 tab 规则）
+- [x] 6.4 实现 Background 端 declarativeNetRequest 规则管理
+  - 文件：`lib/header-rules.ts`、`entrypoints/background.ts`
+  - 接收消息 → 将生效 headers 转换为 `chrome.declarativeNetRequest.updateSessionRules()` 调用
+  - 规则 scope 到指定 tabId
+  - 规则 ID 采用全局递增计数器 + 内存 Map 跟踪（避免 tabId 过大溢出 32-bit int）
+  - 冲突处理：后启用 Group 的同名 Header 覆盖先启用的（通过 rule priority 控制）
+- [x] 6.5 实现 Header Manager 模板 UI
+  - 文件：`templates/header-manager/index.tsx`
+  - Group 卡片列表：名称可编辑、toggle 开关、删除按钮
+  - Group 内 Header 行：checkbox + name input + value input + 删除按钮
+  - "添加 Group"按钮 / Group 内"添加 Header"按钮
+  - 状态变更时自动持久化 + 发消息给 Background 更新规则
+- [x] 6.6 注册模板到模板注册表
+  - 文件：`lib/templates/registry.ts`
+
+### 验收标准
+- DevTools Panel 中可见 Header Manager tab
+- 可创建/编辑/删除 Group 和 Header
+- Group toggle + Header checkbox 双层控制生效
+- 启用的 Header 实际注入到当前 tab 的请求中（Network 面板可验证）
+- 同名 Header 冲突时后启用 Group 覆盖先启用 Group
+- 数据持久化，刷新 DevTools 后配置不丢失
+- `pnpm build` / `pnpm lint` / `pnpm compile` 通过
+
+---
+
+## 里程碑 7：页面浮窗形态（P1）
 
 **目标**：通过 Content Script 注入的全局浮窗独立于 DevTools 工作，复用消息总线和 UI 组件。
 
 ### 任务
-- [ ] 6.1 创建 Content Script UI 入口，使用 Shadow DOM 隔离样式
+- [ ] 7.1 创建 Content Script UI 入口，使用 Shadow DOM 隔离样式
   - 文件：`entrypoints/overlay.content/index.tsx`
-- [ ] 6.2 实现浮窗外壳（可拖拽、可折叠/展开、可调整大小）
+- [ ] 7.2 实现浮窗外壳（可拖拽、可折叠/展开、可调整大小）
   - 文件：`components/overlay/floating-widget.tsx`
-- [ ] 6.3 接入消息总线，复用通信层
+- [ ] 7.3 接入消息总线，复用通信层
   - 文件：`entrypoints/overlay.content/App.tsx`
-- [ ] 6.4 支持在浮窗中加载布局模板（复用里程碑 4 的模板）
+- [ ] 7.4 支持在浮窗中加载布局模板（复用里程碑 4 的模板）
   - 文件：`entrypoints/overlay.content/App.tsx`
-- [ ] 6.5 实现浮窗的显示/隐藏控制（通过 background 消息或快捷键）
+- [ ] 7.5 实现浮窗的显示/隐藏控制（通过 background 消息或快捷键）
   - 文件：`entrypoints/background.ts`
 
 ### 验收标准
@@ -187,18 +228,18 @@
 
 ---
 
-## 里程碑 7：侧边栏形态（P2）
+## 里程碑 8：侧边栏形态（P2）
 
 **目标**：Side Panel 形态可用，复用底座能力。
 
 ### 任务
-- [ ] 7.1 配置 Side Panel manifest 和权限
+- [ ] 8.1 配置 Side Panel manifest 和权限
   - 文件：`wxt.config.ts`、`entrypoints/sidepanel/index.html`
-- [ ] 7.2 创建 Side Panel 入口页面，复用 UI 组件和布局模板
+- [ ] 8.2 创建 Side Panel 入口页面，复用 UI 组件和布局模板
   - 文件：`entrypoints/sidepanel/main.tsx`、`entrypoints/sidepanel/App.tsx`
-- [ ] 7.3 接入消息总线
+- [ ] 8.3 接入消息总线
   - 文件：`entrypoints/sidepanel/App.tsx`
-- [ ] 7.4 实现 Side Panel 的打开方式（扩展图标点击或快捷键）
+- [ ] 8.4 实现 Side Panel 的打开方式（扩展图标点击或快捷键）
   - 文件：`entrypoints/background.ts`
 
 ### 验收标准

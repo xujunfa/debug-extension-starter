@@ -8,7 +8,8 @@ export default defineConfig({
     name: 'Debug Tool Scaffold',
     description: 'Chrome Extension scaffold for building debug tools',
     devtools_page: 'devtools/index.html',
-    permissions: ['storage'],
+    permissions: ['storage', 'declarativeNetRequest'],
+    host_permissions: ['<all_urls>'],
   },
   vite: () => ({
     plugins: [tailwindcss()],
