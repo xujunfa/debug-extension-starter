@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { storageGet, storageSet } from '@/lib/storage';
 import { WindowShell } from './components/window-shell';
 import type { TabItem } from './components/title-bar';
+
+const FloatingHeaderManager = lazy(() => import('./features/header-manager'));
 
 const STORAGE_KEY = 'floating-window-state';
 
@@ -20,11 +22,11 @@ const DEFAULT_STATE: FloatingWindowState = {
   width: 380,
   height: 480,
   collapsed: false,
-  activeTab: 'placeholder',
+  activeTab: 'headers',
 };
 
 const TABS: TabItem[] = [
-  { id: 'placeholder', label: 'Home' },
+  { id: 'headers', label: 'Headers' },
 ];
 
 function computeDefaultPosition(width: number, height: number) {
@@ -92,9 +94,15 @@ export default function App() {
       onPositionChange={(pos) => updateState(pos)}
       onSizeChange={(size) => updateState(size)}
     >
-      <div className="flex h-full items-center justify-center p-4 text-xs text-muted-foreground">
-        Floating window ready. Features coming in milestone 8.2+
-      </div>
+      <Suspense
+        fallback={
+          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+            Loading...
+          </div>
+        }
+      >
+        {state.activeTab === 'headers' && <FloatingHeaderManager />}
+      </Suspense>
     </WindowShell>
   );
 }
