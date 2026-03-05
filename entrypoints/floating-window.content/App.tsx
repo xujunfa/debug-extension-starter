@@ -5,6 +5,7 @@ import type { TabItem } from './components/title-bar';
 
 const FloatingHeaderManager = lazy(() => import('./features/header-manager'));
 const QuickEval = lazy(() => import('./features/quick-eval'));
+const Showcase = lazy(() => import('./features/showcase'));
 
 const STORAGE_KEY = 'floating-window-state';
 
@@ -29,6 +30,7 @@ const DEFAULT_STATE: FloatingWindowState = {
 const TABS: TabItem[] = [
   { id: 'headers', label: 'Headers' },
   { id: 'eval', label: 'Eval' },
+  { id: 'showcase', label: 'UI' },
 ];
 
 function computeDefaultPosition(width: number, height: number) {
@@ -105,6 +107,7 @@ export default function App() {
       >
         {state.activeTab === 'headers' && <FloatingHeaderManager />}
         {state.activeTab === 'eval' && <QuickEval />}
+        {state.activeTab === 'showcase' && <Showcase />}
       </Suspense>
     </WindowShell>
   );
