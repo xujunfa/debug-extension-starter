@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { highlightText } from '@/lib/highlight';
 
 
 type JsonValue =
@@ -23,6 +24,7 @@ interface JsonViewerProps {
   defaultExpanded?: boolean;
   maxDepth?: number;
   highlightKeys?: HighlightRule[];
+  searchText?: string;
 }
 
 interface JsonNodeProps {
@@ -32,6 +34,7 @@ interface JsonNodeProps {
   defaultExpanded: boolean;
   maxDepth: number;
   highlightSet: Set<string>;
+  searchText?: string;
 }
 
 function getType(value: JsonValue): string {
@@ -63,6 +66,17 @@ function hasHighlightedDescendant(value: JsonValue, highlightSet: Set<string>): 
   return false;
 }
 
+function hasMatchingValue(value: JsonValue, search: string): boolean {
+  if (!search) return false;
+  const lower = search.toLowerCase();
+  if (value === null) return false;
+  if (typeof value === 'string') return value.toLowerCase().includes(lower);
+  if (typeof value === 'number' || typeof value === 'boolean')
+    return String(value).toLowerCase().includes(lower);
+  if (Array.isArray(value)) return value.some((v) => hasMatchingValue(v, search));
+  return Object.values(value).some((v) => hasMatchingValue(v, search));
+}
+
 const typeColors: Record<string, string> = {
   string: 'text-green-600 dark:text-green-400',
   number: 'text-blue-600 dark:text-blue-400',
@@ -70,13 +84,13 @@ const typeColors: Record<string, string> = {
   null: 'text-muted-foreground italic',
 };
 
-function ValueDisplay({ value }: { value: JsonValue }) {
+function ValueDisplay({ value, searchText }: { value: JsonValue; searchText?: string }) {
   const type = getType(value);
 
   if (type === 'string') {
     return (
       <span className={typeColors.string}>
-        &quot;{String(value)}&quot;
+        &quot;{searchText ? highlightText(String(value), searchText) : String(value)}&quot;
       </span>
     );
   }
@@ -85,9 +99,10 @@ function ValueDisplay({ value }: { value: JsonValue }) {
     return <span className={typeColors.null}>null</span>;
   }
 
+  const text = String(value);
   return (
     <span className={typeColors[type] ?? 'text-foreground'}>
-      {String(value)}
+      {searchText ? highlightText(text, searchText) : text}
     </span>
   );
 }
@@ -99,11 +114,14 @@ function JsonNode({
   defaultExpanded,
   maxDepth,
   highlightSet,
+  searchText,
 }: JsonNodeProps) {
   const isExpandable =
     value !== null && typeof value === 'object';
   const isHighlighted = label != null && highlightSet.has(label);
-  const shouldAutoExpand = isExpandable && hasHighlightedDescendant(value, highlightSet);
+  const shouldAutoExpandKeys = isExpandable && hasHighlightedDescendant(value, highlightSet);
+  const shouldAutoExpandSearch = isExpandable && hasMatchingValue(value, searchText ?? '');
+  const shouldAutoExpand = shouldAutoExpandKeys || shouldAutoExpandSearch;
   const [expanded, setExpanded] = React.useState(
     shouldAutoExpand || (defaultExpanded && depth < maxDepth),
   );
@@ -126,7 +144,7 @@ function JsonNode({
             {label}:{' '}
           </span>
         )}
-        <ValueDisplay value={value} />
+        <ValueDisplay value={value} searchText={searchText} />
       </div>
     );
   }
@@ -172,6 +190,7 @@ function JsonNode({
               defaultExpanded={defaultExpanded}
               maxDepth={maxDepth}
               highlightSet={highlightSet}
+              searchText={searchText}
             />
           ))}
           {entries.length === 0 && (
@@ -191,6 +210,7 @@ function JsonViewer({
   defaultExpanded = true,
   maxDepth = 4,
   highlightKeys,
+  searchText,
 }: JsonViewerProps) {
   const highlightSet = React.useMemo(
     () => new Set((highlightKeys ?? []).filter((r) => r.enabled).map((r) => r.key)),
@@ -205,6 +225,7 @@ function JsonViewer({
         defaultExpanded={defaultExpanded}
         maxDepth={maxDepth}
         highlightSet={highlightSet}
+        searchText={searchText}
       />
     </div>
   );

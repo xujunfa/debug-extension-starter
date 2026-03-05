@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Play,
   Square,
@@ -6,15 +6,24 @@ import {
   Search,
   ArrowUp,
   ArrowDown,
+  ArrowDownToLine,
   ChevronDown,
   ChevronRight,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { highlightText } from '@/lib/highlight';
 import { connectToBackground, eventBus } from '@/lib/messaging/events';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '@/components/ui/tooltip';
 import { SplitPane } from '@/components/layout/split-pane';
 import { JsonViewer, type JsonValue } from '@/components/debug/json-viewer';
 import { injectWsMonitor, cleanupWsMonitor } from './injector';
@@ -47,13 +56,30 @@ function applyFilter(
   return messages.filter((m) => m.data.toLowerCase().includes(lower));
 }
 
-function MessageDetail({ message }: { message: WsMessage }) {
+function MessageDetail({
+  message,
+  filter,
+  filterType,
+}: {
+  message: WsMessage;
+  filter?: string;
+  filterType?: 'contains' | 'regex';
+}) {
+  const [copied, setCopied] = useState(false);
+
   let parsed: JsonValue | null = null;
   try {
     parsed = JSON.parse(message.data) as JsonValue;
   } catch {
     // not JSON
   }
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(message.data).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [message.data]);
 
   return (
     <div className="flex h-full flex-col">
@@ -64,19 +90,35 @@ function MessageDetail({ message }: { message: WsMessage }) {
           </span>
           <span>{formatTimestamp(message.timestamp)}</span>
           <span>{formatSize(message.size)}</span>
+          <button
+            onClick={handleCopy}
+            className="ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            {copied ? (
+              <>
+                <Check className="size-3 text-green-500" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="size-3" />
+                Copy
+              </>
+            )}
+          </button>
         </div>
       </div>
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-auto">
         <div className="p-2">
           {parsed ? (
-            <JsonViewer data={parsed} />
+            <JsonViewer data={parsed} searchText={filter} />
           ) : (
             <pre className="whitespace-pre-wrap break-all rounded-md border bg-card p-2 font-mono text-xs">
-              {message.data}
+              {filter ? highlightText(message.data, filter, filterType) : message.data}
             </pre>
           )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
@@ -90,10 +132,13 @@ export default function WsMonitor() {
   const [filter, setFilter] = useState('');
   const [filterType, setFilterType] = useState<'contains' | 'regex'>('contains');
   const [connectionsCollapsed, setConnectionsCollapsed] = useState(false);
+  const [directionFilter, setDirectionFilter] = useState<'all' | 'sent' | 'received'>('all');
+  const [autoScroll, setAutoScroll] = useState(true);
 
   const connectionsRef = useRef<WsConnection[]>([]);
   const messagesRef = useRef<WsMessage[]>([]);
   const runningRef = useRef(false);
+  const messageListRef = useRef<HTMLDivElement>(null);
 
   const tabId = chrome.devtools.inspectedWindow.tabId;
 
@@ -201,14 +246,36 @@ export default function WsMonitor() {
     setSelectedConnIds(new Set());
   }, []);
 
-  // Filter messages by selected connections then by text filter
+  // Filter messages: connections → direction → text
   const connFiltered =
     selectedConnIds.size === 0
       ? messages
       : messages.filter((m) => selectedConnIds.has(m.connectionId));
-  const filtered = applyFilter(connFiltered, filter, filterType);
+  const dirFiltered =
+    directionFilter === 'all'
+      ? connFiltered
+      : connFiltered.filter((m) => m.direction === directionFilter);
+  const filtered = applyFilter(dirFiltered, filter, filterType);
 
   const connectionMap = new Map(connections.map((c) => [c.id, c]));
+
+  // Per-connection message count
+  const connMsgCount = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const m of messages) {
+      map.set(m.connectionId, (map.get(m.connectionId) ?? 0) + 1);
+    }
+    return map;
+  }, [messages]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (!autoScroll || filtered.length === 0) return;
+    requestAnimationFrame(() => {
+      const el = messageListRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+  }, [filtered.length, autoScroll]);
 
   const list = (
     <div className="flex h-full flex-col">
@@ -229,6 +296,40 @@ export default function WsMonitor() {
           <Button variant="ghost" size="icon-xs" onClick={handleClear}>
             <Trash2 className="size-3" />
           </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setDirectionFilter(directionFilter === 'sent' ? 'all' : 'sent')}
+                  className={cn(
+                    'shrink-0 rounded p-1 transition-colors',
+                    directionFilter === 'sent'
+                      ? 'bg-blue-500/15 text-blue-500'
+                      : 'text-muted-foreground hover:bg-accent',
+                  )}
+                >
+                  <ArrowUp className="size-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Sent only</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setDirectionFilter(directionFilter === 'received' ? 'all' : 'received')}
+                  className={cn(
+                    'shrink-0 rounded p-1 transition-colors',
+                    directionFilter === 'received'
+                      ? 'bg-green-500/15 text-green-500'
+                      : 'text-muted-foreground hover:bg-accent',
+                  )}
+                >
+                  <ArrowDown className="size-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Received only</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <div className="relative flex-1">
             <Search className="absolute left-2 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -285,15 +386,27 @@ export default function WsMonitor() {
                   selectedConnIds.has(conn.id) && 'bg-accent',
                 )}
               >
-                <span
-                  className={cn(
-                    'inline-block size-2 shrink-0 rounded-full',
-                    conn.status === 'open' ? 'bg-green-500' : 'bg-muted-foreground',
-                  )}
-                  style={{ boxShadow: `0 0 0 1px ${conn.color}` }}
-                />
+                {conn.status === 'open' ? (
+                  <span className="relative inline-flex size-2.5 shrink-0">
+                    <span
+                      className="absolute inset-0 animate-ping rounded-full opacity-75"
+                      style={{ backgroundColor: conn.color }}
+                    />
+                    <span
+                      className="relative inline-flex size-2.5 rounded-full"
+                      style={{ backgroundColor: conn.color }}
+                    />
+                  </span>
+                ) : (
+                  <span className="inline-flex size-2.5 shrink-0 rounded-full border border-muted-foreground/40 bg-muted-foreground/50" />
+                )}
                 <span className="truncate text-muted-foreground">
-                  {conn.url.replace(/^wss?:\/\//, '')}
+                  {filter
+                    ? highlightText(conn.url.replace(/^wss?:\/\//, ''), filter, filterType)
+                    : conn.url.replace(/^wss?:\/\//, '')}
+                </span>
+                <span className="shrink-0 text-[10px] text-muted-foreground/60">
+                  {connMsgCount.get(conn.id) ?? 0}
                 </span>
                 <Badge
                   variant="outline"
@@ -309,7 +422,7 @@ export default function WsMonitor() {
       </div>
 
       {/* Message list */}
-      <ScrollArea className="flex-1">
+      <div ref={messageListRef} className="flex-1 overflow-auto">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-1 py-8 text-muted-foreground">
             {!running ? (
@@ -341,11 +454,13 @@ export default function WsMonitor() {
                   {formatTimestamp(msg.timestamp)}
                 </span>
                 <span className="flex-1 truncate font-mono text-[11px]">
-                  {truncateMessage(msg.data)}
+                  {filter
+                    ? highlightText(truncateMessage(msg.data), filter, filterType)
+                    : truncateMessage(msg.data)}
                 </span>
                 {conn && (
                   <span
-                    className="size-2 shrink-0 rounded-full"
+                    className="size-2.5 shrink-0 rounded-full ring-1 ring-border"
                     style={{ backgroundColor: conn.color }}
                     title={conn.url}
                   />
@@ -357,14 +472,34 @@ export default function WsMonitor() {
             );
           })
         )}
-      </ScrollArea>
+      </div>
 
       {/* Status bar */}
-      <div className="shrink-0 border-t bg-muted/30 px-2 py-1 text-[10px] text-muted-foreground">
-        {connections.length} connection{connections.length !== 1 ? 's' : ''}
-        {' · '}
-        {filtered.length} message{filtered.length !== 1 ? 's' : ''}
-        {filter && ` (${messages.length} total)`}
+      <div className="flex shrink-0 items-center justify-between border-t bg-muted/30 px-2 py-1 text-[10px] text-muted-foreground">
+        <span>
+          {connections.length} connection{connections.length !== 1 ? 's' : ''}
+          {' · '}
+          {filtered.length} message{filtered.length !== 1 ? 's' : ''}
+          {filter && ` (${messages.length} total)`}
+        </span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setAutoScroll(!autoScroll)}
+                className={cn(
+                  'rounded p-0.5 transition-colors',
+                  autoScroll
+                    ? 'text-primary'
+                    : 'text-muted-foreground/50 hover:text-muted-foreground',
+                )}
+              >
+                <ArrowDownToLine className="size-3" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{autoScroll ? 'Auto-scroll on' : 'Auto-scroll off'}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );
@@ -374,7 +509,14 @@ export default function WsMonitor() {
   return (
     <SplitPane
       left={list}
-      right={<MessageDetail key={selectedMessage.id} message={selectedMessage} />}
+      right={
+        <MessageDetail
+          key={selectedMessage.id}
+          message={selectedMessage}
+          filter={filter}
+          filterType={filterType}
+        />
+      }
       defaultRatio={45}
     />
   );
