@@ -15,7 +15,7 @@ export default defineContentScript({
       isolateEvents: ['keydown', 'keyup', 'keypress'],
       onMount(container) {
         const wrapper = document.createElement('div');
-        wrapper.className = 'dark';
+        wrapper.className = 'dark text-foreground';
         container.append(wrapper);
         const root = createRoot(wrapper);
         root.render(<App />);

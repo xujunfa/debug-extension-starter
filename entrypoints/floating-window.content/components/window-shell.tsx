@@ -89,7 +89,7 @@ export function WindowShell({
       animate={{ height: collapsed ? TITLE_BAR_HEIGHT : size.height }}
       transition={{ height: { duration: 0.2, ease: 'easeInOut' } }}
       onDragEnd={handleDragEnd}
-      className="fixed top-0 left-0 overflow-hidden rounded-lg border border-border bg-background shadow-2xl"
+      className="fixed top-0 left-0 z-[2147483647] overflow-hidden rounded-lg border border-border bg-background shadow-2xl"
     >
       <TitleBar
         tabs={tabs}

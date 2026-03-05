@@ -38,7 +38,11 @@
     - KvDisplay：分组模式，含 collapsible group
     - CodeBlock：带标题、语言标签、行号的代码块
   - `entrypoints/floating-window.content/App.tsx`：TABS 新增 `{ id: 'showcase', label: 'UI' }`，lazy 加载 Showcase
+- 自测发现并修复两个浮窗 bugfix：
+  - `window-shell.tsx`：`motion.div` 加 `z-[2147483647]`，防止被页面元素遮挡
+  - `index.tsx`：wrapper className 加 `text-foreground`，修复 Shadow DOM 内文字颜色不可见
 - 下一步：执行里程碑 9（侧边栏形态 P2）
 
 ## 最近变更
 - 2026-03-05 完成里程碑 8.4：浮窗 UI 组件展示页（3 个任务全部完成）
+- 2026-03-05 修复浮窗自测问题：z-index 遮挡 + Shadow DOM 文字颜色
