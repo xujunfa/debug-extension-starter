@@ -34,6 +34,10 @@ export interface RequestMap {
     request: Record<string, never>;
     response: { tabId: number };
   };
+  EVAL_IN_PAGE: {
+    request: { tabId: number; expression: string };
+    response: { success: boolean; result?: unknown; error?: string };
+  };
 }
 
 export type RequestType = keyof RequestMap;

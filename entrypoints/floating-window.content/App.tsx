@@ -4,6 +4,7 @@ import { WindowShell } from './components/window-shell';
 import type { TabItem } from './components/title-bar';
 
 const FloatingHeaderManager = lazy(() => import('./features/header-manager'));
+const QuickEval = lazy(() => import('./features/quick-eval'));
 
 const STORAGE_KEY = 'floating-window-state';
 
@@ -27,6 +28,7 @@ const DEFAULT_STATE: FloatingWindowState = {
 
 const TABS: TabItem[] = [
   { id: 'headers', label: 'Headers' },
+  { id: 'eval', label: 'Eval' },
 ];
 
 function computeDefaultPosition(width: number, height: number) {
@@ -102,6 +104,7 @@ export default function App() {
         }
       >
         {state.activeTab === 'headers' && <FloatingHeaderManager />}
+        {state.activeTab === 'eval' && <QuickEval />}
       </Suspense>
     </WindowShell>
   );

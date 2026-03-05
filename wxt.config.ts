@@ -8,7 +8,7 @@ export default defineConfig({
     name: 'Debug Tool Scaffold',
     description: 'Chrome Extension scaffold for building debug tools',
     devtools_page: 'devtools/index.html',
-    permissions: ['storage', 'declarativeNetRequest'],
+    permissions: ['storage', 'declarativeNetRequest', 'scripting'],
     host_permissions: ['<all_urls>'],
     action: {},
     commands: {

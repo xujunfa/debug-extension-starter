@@ -19,6 +19,30 @@ export default defineBackground(() => {
     return { success: true };
   });
 
+  onRequest('EVAL_IN_PAGE', async ({ tabId, expression }) => {
+    try {
+      const [result] = await chrome.scripting.executeScript({
+        target: { tabId },
+        func: (expr: string) => {
+          try {
+            // eslint-disable-next-line no-eval
+            return { value: eval(expr) };
+          } catch (e) {
+            return { error: (e as Error).message };
+          }
+        },
+        args: [expression],
+        world: 'MAIN',
+      });
+      if (result.result?.error) {
+        return { success: false, error: result.result.error };
+      }
+      return { success: true, result: result.result?.value };
+    } catch (e) {
+      return { success: false, error: (e as Error).message };
+    }
+  });
+
   // Relay WS monitor events from content script to DevTools panel
   browser.runtime.onMessage.addListener(
     (message: unknown, sender: Browser.runtime.MessageSender) => {

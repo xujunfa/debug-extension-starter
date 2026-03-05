@@ -127,6 +127,16 @@
 - **决策**：Background 统一监听 `action.onClicked` 和 `commands.onCommand`，通过 `browser.tabs.sendMessage` 发送 `TOGGLE_FLOATING_WINDOW` 到目标 tab
 - **理由**：Extension icon 和 keyboard commands 只能在 Background 监听；Content Script 通过 `onMessage` 接收即可，架构简洁
 
+## [DEC-015] Quick Eval 使用 chrome.scripting.executeScript + world: 'MAIN'
+- **日期**：2026-03-05
+- **里程碑**：8.3 — Quick Eval 新功能
+- **背景**：浮窗（Content Script）中需要执行用户输入的 JS 表达式并获取结果
+- **备选方案**：
+  1. Content Script 直接 `window.eval()` — 受同源策略限制，且 Content Script 在 ISOLATED world 中无法访问页面全局变量
+  2. Background `chrome.scripting.executeScript` + `world: 'MAIN'` — 在页面上下文执行，能访问页面全局变量，不受 CSP 限制
+- **决策**：方案 2
+- **理由**：`world: 'MAIN'` 确保表达式在页面上下文执行，可以访问 `document`、`window` 及页面定义的全局变量；通过 Background 代理，浮窗只需 sendRequest 即可；需要 `scripting` 权限（已在 FLOATING_WINDOW_DESIGN 中规划）
+
 ## [DEC-010] Data Viewer 快照改为 per-expression 维度
 - **日期**：2026-03-01
 - **里程碑**：5 — 调试模板增强
