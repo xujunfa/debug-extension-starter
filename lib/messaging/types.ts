@@ -30,6 +30,10 @@ export interface RequestMap {
     request: { tabId: number };
     response: { success: boolean };
   };
+  GET_TAB_ID: {
+    request: Record<string, never>;
+    response: { tabId: number };
+  };
 }
 
 export type RequestType = keyof RequestMap;

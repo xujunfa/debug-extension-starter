@@ -110,6 +110,23 @@
 - **决策**：方案 1
 - **理由**：WebSocket 消息是实时流式数据，轮询延迟不可接受；复用现有 messaging bus 体系
 
+## [DEC-013] 浮窗使用 WXT createShadowRootUi + Framer Motion drag
+- **日期**：2026-03-05
+- **里程碑**：8.1 — 浮窗外壳 + 基础通信
+- **背景**：浮窗注入宿主页面，需要样式隔离和拖拽交互
+- **备选方案**：
+  1. `createShadowRootUi` + `cssInjectionMode: 'ui'` — WXT 内置，自动处理 CSS 注入、`:root`→`:host` 映射、`@property` 拆分、生命周期清理
+  2. 手动 `attachShadow` + 手动 CSS 注入 — 灵活但要重复 WXT 已解决的问题
+- **决策**：方案 1（WXT 内置方案）；拖拽用 Framer Motion `dragControls`，resize 用原生 mouse event
+- **理由**：WXT 自动处理 Tailwind v4 在 Shadow DOM 中的兼容问题；motion 库已安装（v12），拖拽约束 + 动画一体化；resize 交互简单不需 motion 额外能力
+
+## [DEC-014] 浮窗显隐通过 Background 中心化调度
+- **日期**：2026-03-05
+- **里程碑**：8.1 — 浮窗外壳 + 基础通信
+- **背景**：浮窗需要响应 Extension icon 点击和键盘快捷键
+- **决策**：Background 统一监听 `action.onClicked` 和 `commands.onCommand`，通过 `browser.tabs.sendMessage` 发送 `TOGGLE_FLOATING_WINDOW` 到目标 tab
+- **理由**：Extension icon 和 keyboard commands 只能在 Background 监听；Content Script 通过 `onMessage` 接收即可，架构简洁
+
 ## [DEC-010] Data Viewer 快照改为 per-expression 维度
 - **日期**：2026-03-01
 - **里程碑**：5 — 调试模板增强

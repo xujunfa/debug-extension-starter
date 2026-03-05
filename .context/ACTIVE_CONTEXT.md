@@ -2,8 +2,8 @@
 
 ## 当前状态
 - 阶段：execute
-- 里程碑：7+ — WebSocket Monitor 优化
-- 状态：已完成
+- 里程碑：8.2 — Header Manager 浮窗适配
+- 状态：待开始
 
 ## 里程碑进度
 
@@ -16,17 +16,28 @@
 - [x] 里程碑 6：Request Header 分组管理器
 - [x] 里程碑 7：WebSocket Monitor
 - [x] 里程碑 7+：WS Monitor UI 优化
+- [x] 里程碑 8.1：浮窗外壳 + 基础通信
 
 ### 待完成
-- [ ] 里程碑 8：页面浮窗形态（P1）
+- [ ] 里程碑 8.2：Header Manager 浮窗适配
+- [ ] 里程碑 8.3：Quick Eval 新功能
+- [ ] 里程碑 8.4：浮窗 UI 组件展示页
 - [ ] 里程碑 9：侧边栏形态（P2）
 
 ## 交接备注
-- WS Monitor UI 优化已完成，`pnpm compile` 通过
-- 新增文件：`lib/highlight.tsx`（文本高亮工具函数）
-- 修改文件：`components/debug/json-viewer.tsx`（searchText prop + 值搜索高亮 + 自动展开）、`templates/ws-monitor/index.tsx`（连接指示器动画、搜索高亮、方向过滤、自动滚动、复制按钮、消息计数）
-- `highlightText` 为共享工具函数，后续其他模板也可复用
+- 里程碑 8.1 已完成，所有 7 个任务均已实现并通过编译
+- 浮窗文件结构：
+  - `entrypoints/floating-window.content/index.tsx` — Content Script 入口，createShadowRootUi 挂载
+  - `entrypoints/floating-window.content/App.tsx` — 根组件，状态管理 + 持久化 + TOGGLE 监听
+  - `entrypoints/floating-window.content/components/window-shell.tsx` — Framer Motion 拖拽 + resize + 折叠动画
+  - `entrypoints/floating-window.content/components/title-bar.tsx` — 标题栏 + Tab pill
+  - `entrypoints/floating-window.content/components/resize-handle.tsx` — 右/下/角 resize 手柄
+  - `entrypoints/floating-window.content/styles.css` — CSS 入口（import main.css + dark scheme）
+- Background 新增：`GET_TAB_ID` handler + `action.onClicked` + `commands.onCommand`
+- wxt.config.ts 新增：`action: {}` + `commands.toggle-floating-window`
+- messaging/types.ts 新增：`GET_TAB_ID` 消息类型
+- App.tsx 中 TABS 数组目前只有 placeholder Home tab，8.2 将注册 Headers tab
+- 下一步：执行里程碑 8.2（Header Manager 浮窗适配）
 
 ## 最近变更
-- 2026-03-05 完成 WS Monitor UI 优化（连接动画、搜索高亮、方向过滤、自动滚动、复制、消息计数）
-- 2026-03-05 完成里程碑 7（WebSocket Monitor）
+- 2026-03-05 完成里程碑 8.1：浮窗外壳 + 基础通信（7 个任务全部完成）

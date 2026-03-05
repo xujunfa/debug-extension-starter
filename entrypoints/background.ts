@@ -5,6 +5,10 @@ import { applyHeaderRules, clearHeaderRules } from '@/lib/header-rules';
 export default defineBackground(() => {
   setupRelay();
 
+  onRequest('GET_TAB_ID', (_payload, sender) => {
+    return { tabId: sender.tab!.id! };
+  });
+
   onRequest('APPLY_HEADER_RULES', async ({ tabId, headers }) => {
     await applyHeaderRules(tabId, headers);
     return { success: true };
@@ -33,6 +37,23 @@ export default defineBackground(() => {
       });
     },
   );
+
+  // Toggle floating window via Extension icon click
+  browser.action.onClicked.addListener(async (tab) => {
+    if (tab.id) {
+      await browser.tabs.sendMessage(tab.id, { type: 'TOGGLE_FLOATING_WINDOW' }).catch(() => {});
+    }
+  });
+
+  // Toggle floating window via keyboard shortcut
+  browser.commands.onCommand.addListener(async (command) => {
+    if (command === 'toggle-floating-window') {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) {
+        await browser.tabs.sendMessage(tab.id, { type: 'TOGGLE_FLOATING_WINDOW' }).catch(() => {});
+      }
+    }
+  });
 
   console.log('Debug Tool background service worker started', {
     id: browser.runtime.id,
