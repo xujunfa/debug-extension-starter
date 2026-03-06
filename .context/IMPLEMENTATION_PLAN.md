@@ -1,7 +1,7 @@
 # 实施计划
 
 ## 概览
-- 项目：Chrome Extension Debug Tool Scaffold
+- 项目：Debug Extension Starter
 - 里程碑总数：9
 - 创建日期：2026-02-28
 - 最近更新：2026-03-05

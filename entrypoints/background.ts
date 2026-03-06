@@ -79,7 +79,7 @@ export default defineBackground(() => {
     }
   });
 
-  console.log('Debug Tool background service worker started', {
+  console.log('Debug Extension Starter background service worker started', {
     id: browser.runtime.id,
   });
 });

@@ -1,6 +1,6 @@
 {
-  "name": "chrome-debug-extension",
-  "description": "Chrome Extension scaffold for building debug tools",
+  "name": "debug-extension-starter",
+  "description": "Browser extension starter for building debugging tools with WXT, React, and TypeScript.",
   "private": true,
   "version": "0.0.1",
   "type": "module",

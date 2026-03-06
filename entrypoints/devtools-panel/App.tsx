@@ -97,7 +97,7 @@ export default function App() {
   return (
     <div className="flex h-screen flex-col">
       <div className="shrink-0 border-b px-4 py-2">
-        <h1 className="text-lg font-bold">Debug Tool Scaffold</h1>
+        <h1 className="text-lg font-bold">Debug Extension Starter</h1>
       </div>
 
       <Tabs defaultValue="templates" className="flex flex-1 flex-col overflow-hidden">

@@ -1,4 +1,4 @@
-# Chrome Extension Debug Tool Scaffold — 设计文档
+# Debug Extension Starter — 设计文档
 
 ## 愿景
 

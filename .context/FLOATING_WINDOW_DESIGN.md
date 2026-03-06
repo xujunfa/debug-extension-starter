@@ -121,7 +121,7 @@ export default defineContentScript({
 
 ```
 ┌─────────────────────────────────────┐
-│ ≡ Debug Tool  [Header] [Command] ▼ │  ← 36px 高度
+│ ≡ Debug Extension  [Header] [Command] ▼ │  ← 36px 高度
 ├─────────────────────────────────────┤
 │                                     │
 │           功能内容区                  │
@@ -130,7 +130,7 @@ export default defineContentScript({
                                     ⌟  ← resize handle
 ```
 
-- **左侧**：拖拽抓手图标 + "Debug Tool" 标题
+- **左侧**：拖拽抓手图标 + "Debug Extension" 标题
 - **中间**：功能切换标签（紧凑 pill 样式）
 - **右侧**：折叠按钮（ChevronDown/ChevronUp）
 - 整个标题栏可拖拽（除按钮区域外）
@@ -217,7 +217,7 @@ interface FloatingWindowState {
 
 ```
 ┌───────────────────────────── 380px ─────────────────────────┐
-│ ☰  Debug Tool           [Headers] [Eval]              ▾    │ ← 标题栏 36px
+│ ☰  Debug Extension      [Headers] [Eval]              ▾    │ ← 标题栏 36px
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌─ Header Groups ──────────────────── 2 active ── + ─┐   │
@@ -240,7 +240,7 @@ interface FloatingWindowState {
 
 ```
 ┌───────────────────────────── 380px ─────────────────────────┐
-│ ☰  Debug Tool           [Headers] [Eval]              ▾    │
+│ ☰  Debug Extension      [Headers] [Eval]              ▾    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌─ Quick Eval ─────────────────────────────────────┐      │
@@ -279,7 +279,7 @@ interface FloatingWindowState {
 
 ```
 ┌──────────────────────────────────────┐
-│ ☰  Debug Tool  [Headers] [Eval]  ▴  │  ← 仅标题栏
+│ ☰  Debug Extension  [Headers] [Eval]  ▴  │  ← 仅标题栏
 └──────────────────────────────────────┘
 ```
 

@@ -5,8 +5,9 @@ import path from 'node:path';
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
-    name: 'Debug Tool Scaffold',
-    description: 'Chrome Extension scaffold for building debug tools',
+    name: 'Debug Extension Starter',
+    description:
+      'Browser extension starter for building debugging tools with WXT, React, and TypeScript.',
     devtools_page: 'devtools/index.html',
     permissions: ['storage', 'declarativeNetRequest', 'scripting'],
     host_permissions: ['<all_urls>'],

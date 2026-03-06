@@ -1,5 +1,5 @@
 browser.devtools.panels.create(
-  'Debug Tool',
+  'Debug Extension',
   '/icon/32.png',
   '/devtools-panel.html',
 );
